@@ -1,0 +1,5 @@
+<resources>
+    <dimen name="fab_margin_bottom">90dp</dimen>
+    <dimen name="fab_margin_side">15dp</dimen>
+    <dimen name="speech_button_bottom">10dp</dimen>
+</resources>

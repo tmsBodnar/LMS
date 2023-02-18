@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorPrimaryDark">
+    <TextView
+        android:id="@+id/error_dialog_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        android:textSize="20sp"
+        android:layout_margin="@dimen/fab_margin_side"
+        android:text="@string/check_bluetooth_text"
+        android:textColor="@color/cardview_light_background"/>
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:numColumns="2">
+    <Button
+        android:id="@+id/OK_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/rounded_btn"
+        android:text="@string/OK"
+        android:layout_column="0"
+        android:layout_gravity="fill"
+        android:layout_columnWeight="1"
+        android:layout_margin="@dimen/speech_button_bottom"
+        />
+    <Button
+        android:id="@+id/Cancel_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/rounded_btn"
+        android:text="@string/cancel"
+        android:layout_column="1"
+        android:layout_gravity="fill"
+        android:layout_columnWeight="1"
+        android:layout_margin="@dimen/speech_button_bottom"
+        android:clickable="true"
+        android:onClick="CancelBtnClick"/>
+    </GridLayout>
+</LinearLayout>

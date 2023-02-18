@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">LED üzenetek</string>
+    <string name="bluetooth_settings">Bluetooth beállítása</string>
+    <string name="bluetooth_settings_message">Kérem, párosítsa a HC-05 eszközt a megnyíló beállításokban!</string>
+    <string name="bluetooth_not_reached">"A HC-05 eszköz nem elérhető"</string>
+    <string name="faq">FAQ</string>
+    <string name="sent">Elküldve: </string>
+    <string name="speech_button">Inkább szóban mondom el</string>
+    <string name="add_new_message">Új üzenet hozzáadása</string>
+    <string name="add">Hozzáadás</string>
+    <string name="delete_message">Üzenet törlése</string>
+    <string name="cancel">Kilépés</string>
+    <string name="check_bluetooth_text">
+        A kapcsolat nem jött létre a HC-05 eszközzel.
+        Kérem, ellenőrizze, hogy az eszköz hatósugáron belül van,
+        és megfelelő a tápellátása!
+    </string>
+    <string name="OK">OK</string>
+    <string name="bluetooth_check">Bluetooth beállítások ellenőrzése</string>
+    <string name="check">Ellenőrzés…</string>
+</resources>

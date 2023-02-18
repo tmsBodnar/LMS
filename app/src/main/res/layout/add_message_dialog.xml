@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorPrimaryDark">
+<TextView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:textAlignment="center"
+    android:textSize="20sp"
+    android:layout_margin="@dimen/fab_margin_side"
+    android:text="@string/add_new_message"
+    android:textColor="@color/cardview_light_background"/>
+<EditText
+    android:layout_width="match_parent"
+    android:layout_height="60dp"
+    android:layout_margin="@dimen/fab_margin_side"
+    android:lines="2"
+    android:id="@+id/new_button_text"
+    android:textColor="@color/cardview_light_background"
+    android:focusable="true"
+    android:inputType="text"
+    />
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="@string/add"
+        android:textSize="25sp"
+        android:textAlignment="center"
+        android:id="@+id/save_new_message"
+        android:background="@drawable/rounded_btn"
+        android:layout_margin="@dimen/speech_button_bottom" />
+</LinearLayout>
