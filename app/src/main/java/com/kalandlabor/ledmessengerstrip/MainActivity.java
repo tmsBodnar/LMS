@@ -65,15 +65,15 @@ public class MainActivity extends AppCompatActivity {
     GridView gridView;
     CustomGridAdapter gridAdapter;
     SharedPreferences sPrefs;
-    List<String> buttonTexts;
+    ArrayList<String> buttonTexts;
     String textToSend;
-    MessagesDataService mService;
     Messenger messenger = null;
     Messenger reply = null;
     ServiceConnection connection;
     boolean mBound = false;
     static BluetoothMessenger btm;
     public static MyBluetoothTask btt = null;
+    SharedPreferences.OnSharedPreferenceChangeListener listener;
     final int ADD_TYPE = 1;
     final int ERROR_TYPE = 2;
     final int DEV_ERROR_TYPE = 3;
@@ -116,17 +116,26 @@ public class MainActivity extends AppCompatActivity {
         btt.execute();
         connection = new RemoteServiceConnection();
         reply = new Messenger(new IncomingHandler());
+        sPrefs = PreferenceManager.getDefaultSharedPreferences(context);
+
+        listener = (prefs, key) -> {
+            if (mBound) {
+                sendButtontextToCar();
+            }
+        };
+        sPrefs.registerOnSharedPreferenceChangeListener(listener);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        // Bind to LocalService
+        sPrefs.registerOnSharedPreferenceChangeListener(listener);
         Intent intent = new Intent();
         intent.setClassName(
                 "com.kalandlabor.ledmessengerstrip",
                 "com.kalandlabor.ledmessengerstrip.services.MessagesDataService");
         bindService(intent, connection, Context.BIND_AUTO_CREATE);
+
     }
 
     @Override
@@ -135,43 +144,41 @@ public class MainActivity extends AppCompatActivity {
         if(btm.getClientSocket() == null) {
             btt.restartMyBluetoothTask();
         }
-            sPrefs = PreferenceManager.getDefaultSharedPreferences(context);
-            Set<String> buttonTextSet = new HashSet<>();
-            buttonTextSet =  sPrefs.getStringSet("buttonText", buttonTextSet);
-            buttonTexts= new ArrayList<>();
-            buttonTexts.addAll(buttonTextSet);
-            for ( String text : buttonTexts) {
-                addNewButton(text);
-            }
-            if(mBound) {
-                try {
-                    Message message = Message.obtain(null, 1, buttonTexts);
-                    message.replyTo = reply;
-                    messenger.send(message);
-                } catch (RemoteException e) {
-                    Toast.makeText(MainActivity.this, "Invocation Failed!!", Toast.LENGTH_LONG).show();
-                    throw new RuntimeException(e);
-                }
-            }
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        SharedPreferences.Editor editor = sPrefs.edit();
-        Set<String> buttonTextSet = new HashSet<>(buttonTexts);
-        buttonTextSet.addAll(buttonTexts);
-        editor.putStringSet("buttonText",buttonTextSet).apply();
+        Set<String> buttonTextSet = new HashSet<>();
+        buttonTextSet =  sPrefs.getStringSet("buttonText", buttonTextSet);
+        buttonTexts= new ArrayList<>();
+        buttonTexts.addAll(buttonTextSet);
+        for ( String text : buttonTexts) {
+            addNewButton(text);
+        }
     }
     @Override
     protected void onStop() {
         super.onStop();
+        sPrefs.unregisterOnSharedPreferenceChangeListener(listener);
         unbindService(connection);
         mBound = false;
     }
 
     private void addNewMessage(View view) {
         openDialog(ADD_TYPE);
+    }
+
+    private void sendButtontextToCar()  {
+        try {
+            Bundle bundle = new Bundle();
+            Set<String> buttonTextSet = new HashSet<String>();
+            ArrayList<String> texts = new ArrayList<String>(sPrefs.getStringSet(
+                    "buttonText", buttonTextSet));
+            bundle.putStringArrayList(
+                    "buttonTexts", texts);
+            Message message = Message.obtain(null, 1, bundle);
+            message.replyTo = reply;
+            messenger.send(message);
+        } catch (RemoteException e) {
+            Toast.makeText(MainActivity.this, "Invocation Failed!!", Toast.LENGTH_LONG).show();
+            throw new RuntimeException(e);
+        }
     }
 
     //opens a dialog based on dialog type
@@ -194,17 +201,6 @@ public class MainActivity extends AppCompatActivity {
                 SharedPreferences.Editor editor = sPrefs.edit();
                 editor.clear();
                 editor.putStringSet("buttonText",buttonTextSet).apply();
-                if(mBound) {
-                    try {
-                        Message message = Message.obtain(null, 1, buttonTexts);
-                        message.replyTo = reply;
-                        messenger.send(message);
-                    } catch (RemoteException e) {
-                        Toast.makeText(MainActivity.this, "Invocation Failed!!", Toast.LENGTH_LONG).show();
-                        throw new RuntimeException(e);
-                    }
-                 //   mService.setButtonTexts(buttonTexts);
-                }
                 dialog.dismiss();
             });
             dialog.show();
@@ -322,7 +318,6 @@ public class MainActivity extends AppCompatActivity {
                 return removeButtonText(button);
             }
         }
-
         return true;
     }
 
@@ -331,9 +326,15 @@ public class MainActivity extends AppCompatActivity {
         for (String s : buttonTexts) {
             if (s.contentEquals(button.getText())) {
                 buttonTexts.remove(s);
+                SharedPreferences.Editor editor = sPrefs.edit();
+                editor.clear();
+                Set<String> buttonTextSet = new HashSet<>(buttonTexts);
+                buttonTextSet.addAll(buttonTexts);
+                editor.putStringSet("buttonText",buttonTextSet).apply();
                 return true;
             }
         }
+
         return false;
     }
 
@@ -415,6 +416,7 @@ public class MainActivity extends AppCompatActivity {
                                        IBinder service) {
             MainActivity.this.messenger = new Messenger(service);
             mBound = true;
+            sendButtontextToCar();
         }
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
@@ -428,14 +430,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg)
         {
-            System.out.println("*****************************************");
-           Log.println(Log.INFO, "xxx","Return successfully received!!!!!!");
-            System.out.println("*****************************************");
-
-            int what = msg.what;
-
-
-            Toast.makeText(MainActivity.this.getApplicationContext(), "Remote Service replied-("+msg.arg1+")", Toast.LENGTH_LONG).show();
+            Log.println(Log.INFO, "xxx", "in app received from service: " + msg.what);
         }
     }
 }

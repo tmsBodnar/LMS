@@ -7,9 +7,15 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.car.app.model.GridItem;
 import androidx.car.app.model.Item;
@@ -33,25 +39,11 @@ import java.util.Set;
 
 public class MessengerScreen extends Screen {
 
-    SharedPreferences sPrefs;
-    List<String> buttonTexts;
-    List<Button> buttonList;
+    Messenger messenger = null;
+    Messenger reply = null;
+    ServiceConnection connection;
     boolean mBound;
-    private ServiceConnection mConnection = new ServiceConnection() {
-        // Called when the connection with the service is established
-        public void onServiceConnected(ComponentName className, IBinder service) {
-            // Because we have bound to an explicit
-            // service that is running in our own process, we can
-            // cast its IBinder to a concrete class and directly access it.
-
-            mBound = true;
-        }
-
-        // Called when the connection with the service disconnects unexpectedly
-        public void onServiceDisconnected(ComponentName className) {
-            mBound = false;
-        }
-    };
+    List<String> buttonTexts = new ArrayList<String>();
     protected MessengerScreen(@NonNull CarContext carContext) {
         super(carContext);
     }
@@ -59,37 +51,85 @@ public class MessengerScreen extends Screen {
     @NonNull
     @Override
     public Template onGetTemplate() {
-            Intent servIntent = new Intent();
-            servIntent.setClassName("com.kalandlabor.ledmessengerstrip.services", "MessengerDataService");
-            getCarContext().bindService(servIntent,mConnection,Context.BIND_AUTO_CREATE);
-            buttonTexts = new ArrayList<>();
-            servIntent.getStringArrayListExtra("buttonTexts");
+        connection = new RemoteServiceConnection();
+        reply = new Messenger(new IncomingHandler());
+        Intent servIntent = new Intent();
+        servIntent.setClassName(
+                "com.kalandlabor.ledmessengerstrip",
+                "com.kalandlabor.ledmessengerstrip.services.MessagesDataService");
+        getCarContext().bindService(servIntent, connection, Context.BIND_AUTO_CREATE);
 
-            ItemList.Builder itemList = new ItemList.Builder();
-            if (buttonTexts.size() > 0) {
-                Log.println(Log.INFO, "xxx", buttonTexts.get(0));
-                for (String text : buttonTexts) {
-                    Row.Builder gridBuilder = new Row.Builder();
-                    Item item = gridBuilder.setTitle(text)
-                            .build();
-                    itemList.addItem(item);
+        if (mBound) {
+            Log.println(Log.INFO, "xxx", "carmessenger bounded");
+            if (buttonTexts.size() < 1) {
+                try {
+                    Message message = Message.obtain(null, 33, 0, 0);
+                    message.replyTo = reply;
+                    messenger.send(message);
+                } catch (RemoteException e) {
+                    Toast.makeText(getCarContext(), "Invocation Failed!!", Toast.LENGTH_LONG).show();
+                    throw new RuntimeException(e);
                 }
-                itemList.setOnSelectedListener(this::onTitleClicked);
-            } else {
+            }
+        }
+        return createButtons();
+    }
+
+    private ListTemplate createButtons(){
+        ItemList.Builder itemList = new ItemList.Builder();
+        if (buttonTexts.size() > 0) {
+            Log.println(Log.INFO, "xxx", buttonTexts.get(0));
+            for (String text : buttonTexts) {
                 Row.Builder gridBuilder = new Row.Builder();
-                Item item = gridBuilder.setTitle("nincs üzenet")
+                Item item = gridBuilder.setTitle(text)
                         .build();
                 itemList.addItem(item);
             }
-            return new ListTemplate.Builder()
-                    .setTitle("Messages")
-                    .setHeaderAction(Action.APP_ICON)
-                    .setSingleList(itemList.build())
+            itemList.setOnSelectedListener(this::onTitleClicked);
+        } else {
+            Row.Builder gridBuilder = new Row.Builder();
+            Item item = gridBuilder.setTitle("nincs üzenet")
                     .build();
+            itemList.addItem(item);
+        }
+        return new ListTemplate.Builder()
+                .setTitle("Messages")
+                .setHeaderAction(Action.APP_ICON)
+                .setSingleList(itemList.build())
+                .build();
     }
 
     private void onTitleClicked(int index) {
         CarToast.makeText(getCarContext(), buttonTexts.get(index) +" clicked", CarToast.LENGTH_LONG)
                 .show();
+    }
+
+    private class RemoteServiceConnection implements ServiceConnection {
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            MessengerScreen.this.messenger = new Messenger(service);
+            mBound = true;
+        }
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            MessengerScreen.this.messenger = null;
+            mBound = false;
+        }
+    }
+
+    private class IncomingHandler extends Handler
+    {
+        @Override
+        public void handleMessage(Message msg)
+        {
+            int what = msg.what;
+            if (what == 44) {
+                Bundle bundle = (Bundle) msg.obj;
+                MessengerScreen.this.buttonTexts = bundle.getStringArrayList("buttonTexts");
+                Log.println(Log.INFO, "xxx", "in carmessenger received from service: " + buttonTexts.size());
+                invalidate();
+            }
+        }
     }
 }
