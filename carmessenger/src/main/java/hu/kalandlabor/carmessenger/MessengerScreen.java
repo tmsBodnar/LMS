@@ -63,6 +63,7 @@ public class MessengerScreen extends Screen {
             servIntent.setClassName("com.kalandlabor.ledmessengerstrip.services", "MessengerDataService");
             getCarContext().bindService(servIntent,mConnection,Context.BIND_AUTO_CREATE);
             buttonTexts = new ArrayList<>();
+            servIntent.getStringArrayListExtra("buttonTexts");
 
             ItemList.Builder itemList = new ItemList.Builder();
             if (buttonTexts.size() > 0) {

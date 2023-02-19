@@ -2,6 +2,7 @@ package com.kalandlabor.ledmessengerstrip;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.app.Service;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
@@ -22,7 +23,11 @@ import androidx.appcompat.widget.Toolbar;
 import android.os.Debug;
 import androidx.preference.PreferenceManager;
 
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 import android.speech.RecognizerIntent;
 import android.util.Log;
 import android.view.Gravity;
@@ -63,6 +68,9 @@ public class MainActivity extends AppCompatActivity {
     List<String> buttonTexts;
     String textToSend;
     MessagesDataService mService;
+    Messenger messenger = null;
+    Messenger reply = null;
+    ServiceConnection connection;
     boolean mBound = false;
     static BluetoothMessenger btm;
     public static MyBluetoothTask btt = null;
@@ -88,19 +96,7 @@ public class MainActivity extends AppCompatActivity {
                 btt.restartMyBluetoothTask();
             });
 
-    private ServiceConnection connection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName className,
-                                       IBinder service) {
-            MessagesDataService.LocalBinder binder = (MessagesDataService.LocalBinder) service;
-            mService = binder.getService();
-            mBound = true;
-        }
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-            mBound = false;
-        }
-    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,13 +114,18 @@ public class MainActivity extends AppCompatActivity {
         btm = new BluetoothMessenger();
         btt = new MyBluetoothTask(MainActivity.this);
         btt.execute();
+        connection = new RemoteServiceConnection();
+        reply = new Messenger(new IncomingHandler());
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         // Bind to LocalService
-        Intent intent = new Intent(this, MessagesDataService.class);
+        Intent intent = new Intent();
+        intent.setClassName(
+                "com.kalandlabor.ledmessengerstrip",
+                "com.kalandlabor.ledmessengerstrip.services.MessagesDataService");
         bindService(intent, connection, Context.BIND_AUTO_CREATE);
     }
 
@@ -143,7 +144,14 @@ public class MainActivity extends AppCompatActivity {
                 addNewButton(text);
             }
             if(mBound) {
-                mService.setButtonTexts(buttonTexts);
+                try {
+                    Message message = Message.obtain(null, 1, buttonTexts);
+                    message.replyTo = reply;
+                    messenger.send(message);
+                } catch (RemoteException e) {
+                    Toast.makeText(MainActivity.this, "Invocation Failed!!", Toast.LENGTH_LONG).show();
+                    throw new RuntimeException(e);
+                }
             }
     }
 
@@ -187,7 +195,15 @@ public class MainActivity extends AppCompatActivity {
                 editor.clear();
                 editor.putStringSet("buttonText",buttonTextSet).apply();
                 if(mBound) {
-                    mService.setButtonTexts(buttonTexts);
+                    try {
+                        Message message = Message.obtain(null, 1, buttonTexts);
+                        message.replyTo = reply;
+                        messenger.send(message);
+                    } catch (RemoteException e) {
+                        Toast.makeText(MainActivity.this, "Invocation Failed!!", Toast.LENGTH_LONG).show();
+                        throw new RuntimeException(e);
+                    }
+                 //   mService.setButtonTexts(buttonTexts);
                 }
                 dialog.dismiss();
             });
@@ -390,6 +406,36 @@ public class MainActivity extends AppCompatActivity {
         public void restartMyBluetoothTask(){
             myBtt = new MyBluetoothTask(weakActivity.get());
             myBtt.execute();
+        }
+    }
+
+    private class RemoteServiceConnection implements ServiceConnection {
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            MainActivity.this.messenger = new Messenger(service);
+            mBound = true;
+        }
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            MainActivity.this.messenger = null;
+            mBound = false;
+        }
+    }
+
+    private class IncomingHandler extends Handler
+    {
+        @Override
+        public void handleMessage(Message msg)
+        {
+            System.out.println("*****************************************");
+           Log.println(Log.INFO, "xxx","Return successfully received!!!!!!");
+            System.out.println("*****************************************");
+
+            int what = msg.what;
+
+
+            Toast.makeText(MainActivity.this.getApplicationContext(), "Remote Service replied-("+msg.arg1+")", Toast.LENGTH_LONG).show();
         }
     }
 }
