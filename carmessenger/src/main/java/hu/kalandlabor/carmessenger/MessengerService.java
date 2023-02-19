@@ -1,15 +1,15 @@
-package com.kalandlabor.ledmessengerstrip.AA;
+package hu.kalandlabor.carmessenger;
 
+import android.app.Service;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.os.IBinder;
 
 import androidx.annotation.NonNull;
 import androidx.car.app.CarAppService;
 import androidx.car.app.Screen;
 import androidx.car.app.Session;
 import androidx.car.app.validation.HostValidator;
-
-import com.kalandlabor.ledmessengerstrip.AA.MessengerScreen;
 
 public final class MessengerService extends CarAppService {
     @NonNull

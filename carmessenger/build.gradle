@@ -1,15 +1,19 @@
 apply plugin: 'com.android.application'
 
+
 android {
     compileSdkVersion 33
+
     defaultConfig {
-        applicationId "com.kalandlabor.ledmessengerstrip"
+        applicationId "hu.kalandlabor.carmessenger"
         minSdkVersion 29
         targetSdkVersion 33
-        versionCode 2
-        versionName "1.1"
+        versionCode 1
+        versionName "1.0"
+
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -23,10 +27,8 @@ android {
 }
 
 dependencies {
-    implementation ':carmessenger'
-    implementation 'androidx.appcompat:appcompat:1.5.1'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'com.google.android.material:material:1.6.0'
+    implementation ':app'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
@@ -36,4 +38,11 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-viewmodel:$lifecycle_version"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
 
+    implementation "androidx.car.app:app:1.2.0"
+
+    // For Android Auto specific functionality
+    implementation "androidx.car.app:app-projected:1.2.0"
+
+    // For testing
+    testImplementation "androidx.car.app:app-testing:1.2.0"
 }

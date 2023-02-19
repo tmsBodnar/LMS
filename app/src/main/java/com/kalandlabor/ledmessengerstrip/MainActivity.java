@@ -3,9 +3,12 @@ package com.kalandlabor.ledmessengerstrip;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 
@@ -17,7 +20,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.os.Debug;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
+
+import android.os.IBinder;
 import android.speech.RecognizerIntent;
 import android.util.Log;
 import android.view.Gravity;
@@ -40,6 +45,7 @@ import java.util.Set;
 
 import com.kalandlabor.ledmessengerstrip.adapters.CustomGridAdapter;
 import com.kalandlabor.ledmessengerstrip.managers.BluetoothMessenger;
+import com.kalandlabor.ledmessengerstrip.services.MessagesDataService;
 
 /**
  * App for controlling LED messenger Strip device
@@ -56,12 +62,13 @@ public class MainActivity extends AppCompatActivity {
     SharedPreferences sPrefs;
     List<String> buttonTexts;
     String textToSend;
+    MessagesDataService mService;
+    boolean mBound = false;
     static BluetoothMessenger btm;
+    public static MyBluetoothTask btt = null;
     final int ADD_TYPE = 1;
     final int ERROR_TYPE = 2;
     final int DEV_ERROR_TYPE = 3;
-
-    public static MyBluetoothTask btt = null;
 
     ActivityResultLauncher<Intent> startSpeechActivityIntent = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -80,6 +87,20 @@ public class MainActivity extends AppCompatActivity {
                 btt.cancel(true);
                 btt.restartMyBluetoothTask();
             });
+
+    private ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            MessagesDataService.LocalBinder binder = (MessagesDataService.LocalBinder) service;
+            mService = binder.getService();
+            mBound = true;
+        }
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mBound = false;
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,19 +121,30 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        // Bind to LocalService
+        Intent intent = new Intent(this, MessagesDataService.class);
+        bindService(intent, connection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
     protected void onResume(){
         super.onResume();
         if(btm.getClientSocket() == null) {
             btt.restartMyBluetoothTask();
         }
-        sPrefs = PreferenceManager.getDefaultSharedPreferences(context);
-        Set<String> buttonTextSet = new HashSet<>();
-        buttonTextSet =  sPrefs.getStringSet("buttonText", buttonTextSet);
-        buttonTexts= new ArrayList<>();
-        buttonTexts.addAll(buttonTextSet);
-        for ( String text : buttonTexts) {
-            addNewButton(text);
-        }
+            sPrefs = PreferenceManager.getDefaultSharedPreferences(context);
+            Set<String> buttonTextSet = new HashSet<>();
+            buttonTextSet =  sPrefs.getStringSet("buttonText", buttonTextSet);
+            buttonTexts= new ArrayList<>();
+            buttonTexts.addAll(buttonTextSet);
+            for ( String text : buttonTexts) {
+                addNewButton(text);
+            }
+            if(mBound) {
+                mService.setButtonTexts(buttonTexts);
+            }
     }
 
     @Override
@@ -122,6 +154,12 @@ public class MainActivity extends AppCompatActivity {
         Set<String> buttonTextSet = new HashSet<>(buttonTexts);
         buttonTextSet.addAll(buttonTexts);
         editor.putStringSet("buttonText",buttonTextSet).apply();
+    }
+    @Override
+    protected void onStop() {
+        super.onStop();
+        unbindService(connection);
+        mBound = false;
     }
 
     private void addNewMessage(View view) {
@@ -140,7 +178,17 @@ public class MainActivity extends AppCompatActivity {
             dialogView.findViewById(R.id.save_new_message).setOnClickListener(v -> {
                 newButtonsText = dialogView.findViewById(R.id.new_button_text);
                 buttonTexts.add(newButtonsText.getText().toString());
-                addNewButton(newButtonsText.getText().toString());
+                String newText = newButtonsText.getText().toString();
+                addNewButton(newText);
+                Set<String> buttonTextSet = new HashSet<>();
+                buttonTextSet =  sPrefs.getStringSet("buttonText", buttonTextSet);
+                buttonTextSet.add(newText);
+                SharedPreferences.Editor editor = sPrefs.edit();
+                editor.clear();
+                editor.putStringSet("buttonText",buttonTextSet).apply();
+                if(mBound) {
+                    mService.setButtonTexts(buttonTexts);
+                }
                 dialog.dismiss();
             });
             dialog.show();
