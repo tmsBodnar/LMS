@@ -1,9 +1,7 @@
 package hu.kalandlabor.carmessenger;
 
-import android.app.Service;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
-import android.os.IBinder;
 
 import androidx.annotation.NonNull;
 import androidx.car.app.CarAppService;
