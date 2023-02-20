@@ -17,10 +17,13 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
 
+import androidx.car.app.model.ActionStrip;
+import androidx.car.app.model.CarIcon;
 import androidx.car.app.model.GridItem;
 import androidx.car.app.model.Item;
 import androidx.car.app.model.ListTemplate;
 import androidx.car.app.model.Row;
+import androidx.core.graphics.drawable.IconCompat;
 import androidx.preference.PreferenceManager;
 
 import androidx.annotation.NonNull;
@@ -58,7 +61,11 @@ public class MessengerScreen extends Screen {
                 "com.kalandlabor.ledmessengerstrip",
                 "com.kalandlabor.ledmessengerstrip.services.MessagesDataService");
         getCarContext().bindService(servIntent, connection, Context.BIND_AUTO_CREATE);
+        getButtonTexts();
+        return createButtons();
+    }
 
+    private void getButtonTexts() {
         if (mBound) {
             Log.println(Log.INFO, "xxx", "carmessenger bounded");
             if (buttonTexts.size() < 1) {
@@ -72,13 +79,24 @@ public class MessengerScreen extends Screen {
                 }
             }
         }
-        return createButtons();
     }
 
     private ListTemplate createButtons(){
         ItemList.Builder itemList = new ItemList.Builder();
+
+        IconCompat refreshIcon = IconCompat.createWithResource(
+                getCarContext(), R.mipmap.ic_refresh_foreground);
+        CarIcon refreshCarIcon = new CarIcon.Builder(refreshIcon).build();
+
+        IconCompat micIcon = IconCompat.createWithResource(
+                getCarContext(), R.mipmap.ic_mic2_foreground);
+        CarIcon microphoneCarIcon = new CarIcon.Builder(micIcon).build();
+        Action mic = new Action.Builder()
+                .setIcon(microphoneCarIcon)
+                .setTitle("Mondd el")
+                .setOnClickListener(this::onMicClicked)
+                .build();
         if (buttonTexts.size() > 0) {
-            Log.println(Log.INFO, "xxx", buttonTexts.get(0));
             for (String text : buttonTexts) {
                 Row.Builder gridBuilder = new Row.Builder();
                 Item item = gridBuilder.setTitle(text)
@@ -87,16 +105,29 @@ public class MessengerScreen extends Screen {
             }
             itemList.setOnSelectedListener(this::onTitleClicked);
         } else {
+
             Row.Builder gridBuilder = new Row.Builder();
             Item item = gridBuilder.setTitle("nincs üzenet")
+                    .setImage(refreshCarIcon)
+                    .setOnClickListener(this::onRefreshClicked)
                     .build();
             itemList.addItem(item);
         }
+        ActionStrip strip = new ActionStrip.Builder().addAction(mic).build();
         return new ListTemplate.Builder()
                 .setTitle("Messages")
-                .setHeaderAction(Action.APP_ICON)
+                .setActionStrip(strip)
                 .setSingleList(itemList.build())
                 .build();
+    }
+
+    private void onRefreshClicked() {
+        getButtonTexts();
+    }
+
+    private void onMicClicked() {
+        CarToast.makeText(getCarContext(), " Mic clicked", CarToast.LENGTH_LONG)
+                .show();
     }
 
     private void onTitleClicked(int index) {

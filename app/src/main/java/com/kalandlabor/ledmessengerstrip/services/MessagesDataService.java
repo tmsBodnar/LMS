@@ -60,11 +60,21 @@ public class MessagesDataService extends Service {
 
             int what = msg.what;
 
-            Message message = Message.obtain(null, 2, 0, 0);
+            Message message;
             if (what == 1) {
                 Bundle bundle = (Bundle) msg.obj;
                 setButtonTexts(bundle.getStringArrayList("buttonTexts"));
                 Log.println(Log.INFO, "xxx", "in service received from app: " + buttonTexts.size());
+
+                message = Message.obtain(null, 44, 0, 0, bundle);
+                try {
+                    //make the RPC invocation
+                    Messenger replyTo = msg.replyTo;
+                    replyTo.send(message);
+                } catch (RemoteException rme) {
+                    //Show an Error Message
+                    Toast.makeText(MessagesDataService.this, "Invocation failed", Toast.LENGTH_SHORT).show();
+                }
             }
             if (what == 33 && buttonTexts != null) {
                 Bundle bundle = new Bundle();
