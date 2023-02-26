@@ -295,7 +295,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // sends message with BluetoothMessenger class
-    private void sendToBluetooth(String textToSend) {
+    protected void sendToBluetooth(String textToSend) {
         if(btm.getClientSocket() != null) {
             showToast("elküldve: " + textToSend);
             btm.sendMessage(textToSend);
@@ -431,6 +431,11 @@ public class MainActivity extends AppCompatActivity {
         public void handleMessage(Message msg)
         {
             Log.println(Log.INFO, "xxx", "in app received from service: " + msg.what);
+            if (msg.what == 66) {
+                Bundle bundle = (Bundle) msg.obj;
+                String text = bundle.getString("text");
+                MainActivity.this.sendToBluetooth(text);
+            }
         }
     }
 }

@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">CarMessenger</string>
+    <string name="refresh_messages">Üzenetek Frissítése</string>
+    <string name="say_something">Mondd el</string>
+    <string name="title">LetterConveyor</string>
+    <string name="sent">Üzenet elküldve</string>
+    <string name="no_connect">Nincs kapcsolat</string>
+    <string name="not_sent">Küldési hiba</string>
+    <string name="recording_in_progress">Felvétel</string>
+    <string name="recording_complete">Kész</string>
+    <string name="speech_recongition_cancelled">Törölve</string>
+    <string name="voice_command_not_recognized">nincs ilyen parancs</string>
 </resources>

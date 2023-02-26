@@ -24,6 +24,8 @@ public class MessagesDataService extends Service {
     private Messenger messenger;
     public ArrayList<String> buttonTexts = new ArrayList<String>();
 
+    public Messenger appMessenger;
+
     public MessagesDataService() {
     }
     public ArrayList<String> getButtonTexts(){
@@ -70,6 +72,9 @@ public class MessagesDataService extends Service {
                 try {
                     //make the RPC invocation
                     Messenger replyTo = msg.replyTo;
+                    if (appMessenger == null) {
+                        appMessenger = replyTo;
+                    }
                     replyTo.send(message);
                 } catch (RemoteException rme) {
                     //Show an Error Message
@@ -88,6 +93,17 @@ public class MessagesDataService extends Service {
                 } catch (RemoteException rme) {
                     //Show an Error Message
                     Toast.makeText(MessagesDataService.this, "Invocation failed", Toast.LENGTH_SHORT).show();
+                }
+            }
+            if (what == 55) {
+                Bundle bundle = (Bundle) msg.obj;
+                String text = bundle.getString("text");
+                Log.println(Log.INFO, "xxx","got message from car " + text);
+                message = Message.obtain(null, 66,0,0, bundle);
+                try {
+                    appMessenger.send(message);
+                } catch (RemoteException e) {
+                    throw new RuntimeException(e);
                 }
             }
 
