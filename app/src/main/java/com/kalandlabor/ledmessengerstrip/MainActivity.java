@@ -2,27 +2,14 @@ package com.kalandlabor.ledmessengerstrip;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.app.Service;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-
-import android.os.Debug;
-import androidx.preference.PreferenceManager;
-
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -32,9 +19,9 @@ import android.speech.RecognizerIntent;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -42,15 +29,21 @@ import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.preference.PreferenceManager;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.kalandlabor.ledmessengerstrip.adapters.CustomGridAdapter;
+import com.kalandlabor.ledmessengerstrip.managers.BluetoothMessenger;
+
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import com.kalandlabor.ledmessengerstrip.adapters.CustomGridAdapter;
-import com.kalandlabor.ledmessengerstrip.managers.BluetoothMessenger;
-import com.kalandlabor.ledmessengerstrip.services.MessagesDataService;
 
 /**
  * App for controlling LED messenger Strip device
@@ -287,7 +280,6 @@ public class MainActivity extends AppCompatActivity {
         intent.putExtra(RecognizerIntent.EXTRA_PROMPT,
                 "Mondd az üzeneted!");
         try {
-       //     startActivityForResult(intent, REQ_CODE_SPEECH_INPUT);
             startSpeechActivityIntent.launch(intent);
         } catch (ActivityNotFoundException a) {
             a.printStackTrace();

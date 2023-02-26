@@ -2,7 +2,6 @@ package com.kalandlabor.ledmessengerstrip.services;
 
 import android.app.Service;
 import android.content.Intent;
-import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -12,14 +11,9 @@ import android.os.RemoteException;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.kalandlabor.ledmessengerstrip.MainActivity;
-
 import java.util.ArrayList;
-import java.util.List;
 
 public class MessagesDataService extends Service {
-
-   // private final IBinder binder = new LocalBinder();
 
     private Messenger messenger;
     public ArrayList<String> buttonTexts = new ArrayList<String>();
@@ -27,9 +21,6 @@ public class MessagesDataService extends Service {
     public Messenger appMessenger;
 
     public MessagesDataService() {
-    }
-    public ArrayList<String> getButtonTexts(){
-        return buttonTexts;
     }
     public void setButtonTexts(ArrayList<String> texts) {
         buttonTexts = texts;
@@ -96,6 +87,17 @@ public class MessagesDataService extends Service {
                 }
             }
             if (what == 55) {
+                Bundle bundle = (Bundle) msg.obj;
+                String text = bundle.getString("text");
+                Log.println(Log.INFO, "xxx","got message from car " + text);
+                message = Message.obtain(null, 66,0,0, bundle);
+                try {
+                    appMessenger.send(message);
+                } catch (RemoteException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            if (what == 77) {
                 Bundle bundle = (Bundle) msg.obj;
                 String text = bundle.getString("text");
                 Log.println(Log.INFO, "xxx","got message from car " + text);

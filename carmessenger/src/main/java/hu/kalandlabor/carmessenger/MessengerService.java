@@ -1,18 +1,15 @@
 package hu.kalandlabor.carmessenger;
 
-import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.speech.SpeechRecognizer;
 
 import androidx.annotation.NonNull;
 import androidx.car.app.CarAppService;
-import androidx.car.app.Screen;
 import androidx.car.app.Session;
 import androidx.car.app.validation.HostValidator;
 
 public final class MessengerService extends CarAppService {
     SpeechRecognizer speechRecognizer;
-    SpeechToTextSession speechToTextSession;
     @NonNull
     @Override
     public HostValidator createHostValidator() {
@@ -29,7 +26,6 @@ public final class MessengerService extends CarAppService {
     @Override
     public Session onCreateSession() {
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
-
         return new SpeechToTextSession(this, speechRecognizer);
 
     }

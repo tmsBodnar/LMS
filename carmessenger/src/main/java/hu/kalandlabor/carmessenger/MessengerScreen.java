@@ -52,9 +52,7 @@ public class MessengerScreen extends Screen implements DefaultLifecycleObserver 
     protected MessengerScreen(@NonNull CarContext carContext, SpeechToTextSession speechToTextSession) {
         super(carContext);
         this.speechToTextSession = speechToTextSession;
-
         this.getLifecycle().addObserver(this);
-
     }
 
     @NonNull
@@ -181,9 +179,6 @@ public class MessengerScreen extends Screen implements DefaultLifecycleObserver 
         }, duration);
 
     }
-
-
-     //   speechRecognizer.startListening(intent);
     private void onTitleClicked(int index) {
         if (mBound) {
             try {
@@ -203,7 +198,6 @@ public class MessengerScreen extends Screen implements DefaultLifecycleObserver 
                     .show();
         }
     }
-
     private class RemoteServiceConnection implements ServiceConnection {
         @Override
         public void onServiceConnected(ComponentName className,
@@ -217,7 +211,6 @@ public class MessengerScreen extends Screen implements DefaultLifecycleObserver 
             mBound = false;
         }
     }
-
     private class IncomingHandler extends Handler
     {
         @Override
