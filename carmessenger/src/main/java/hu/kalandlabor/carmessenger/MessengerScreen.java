@@ -1,9 +1,13 @@
 package hu.kalandlabor.carmessenger;
 
+import android.Manifest;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.os.Bundle;
@@ -20,6 +24,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.car.app.CarContext;
 import androidx.car.app.CarToast;
+import androidx.car.app.OnRequestPermissionsListener;
 import androidx.car.app.Screen;
 import androidx.car.app.model.Action;
 import androidx.car.app.model.ActionStrip;
@@ -29,12 +34,12 @@ import androidx.car.app.model.ItemList;
 import androidx.car.app.model.ListTemplate;
 import androidx.car.app.model.Row;
 import androidx.car.app.model.Template;
-import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.IconCompat;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MessengerScreen extends Screen implements DefaultLifecycleObserver {
@@ -47,12 +52,34 @@ public class MessengerScreen extends Screen implements DefaultLifecycleObserver 
     List<String> buttonTexts = new ArrayList<String>();
     private SpeechToTextSession speechToTextSession;
     Intent speechRecognizerIntent;
+    AudioManager am;
+    AudioFocusRequest audioFocusRequest;
 
 
     protected MessengerScreen(@NonNull CarContext carContext, SpeechToTextSession speechToTextSession) {
         super(carContext);
         this.speechToTextSession = speechToTextSession;
         this.getLifecycle().addObserver(this);
+        if (carContext.checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_DENIED) {
+            Toast.makeText(carContext, R.string.setup_permission, Toast.LENGTH_SHORT).show();
+            //TODO implement long message and button for open permission settings
+        }
+        am = (AudioManager) getCarContext().getSystemService(Context.AUDIO_SERVICE);
+        AudioAttributes audioAttributes =
+                new AudioAttributes.Builder()
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
+                        .build();
+
+        audioFocusRequest =
+                new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
+                        .setAudioAttributes(audioAttributes)
+                        .setOnAudioFocusChangeListener(state -> {
+                            if (state == AudioManager.AUDIOFOCUS_LOSS) {
+                                speechToTextSession.speechRecognizer.cancel();
+                            }
+                        })
+                        .build();
     }
 
     @NonNull
@@ -67,7 +94,6 @@ public class MessengerScreen extends Screen implements DefaultLifecycleObserver 
         if (!mBound) {
             getCarContext().bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE);
         }
-        Log.println(Log.INFO, "xxx", "onGetTemplate, bounded:" + mBound);
         getServiceConnection();
         getButtonTexts();
         return createButtons();
@@ -76,7 +102,6 @@ public class MessengerScreen extends Screen implements DefaultLifecycleObserver 
     @Override
     public void onPause(@NonNull LifecycleOwner owner) {
         DefaultLifecycleObserver.super.onPause(owner);
-        Log.d("TAG", "On pause");
         speechToTextSession.speechRecognizer.cancel();
     }
 
@@ -88,9 +113,7 @@ public class MessengerScreen extends Screen implements DefaultLifecycleObserver 
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "hu-HU");
-        intent.putExtra(RecognizerIntent.EXTRA_PROMPT,
-                "Mondd az üzeneted!");
-
+        // TODO implement settings page on phone to set extra languages (and maybe permission settings)
         speechToTextSession.speechRecognizer.cancel();
         speechRecognizerIntent = intent;
     }
@@ -102,16 +125,14 @@ public class MessengerScreen extends Screen implements DefaultLifecycleObserver 
     }
 
     private void getButtonTexts() {
-        Log.println(Log.INFO, "xxx", "getButtonTexts bounded:" + mBound);
         if (mBound) {
-            Log.println(Log.INFO, "xxx", "carmessenger bounded:");
             if (buttonTexts.size() < 1) {
                 try {
                     Message message = Message.obtain(null, 33, 0, 0);
                     message.replyTo = reply;
                     messenger.send(message);
                 } catch (RemoteException e) {
-                    Toast.makeText(getCarContext(), "Invocation Failed!!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getCarContext(), R.string.sending_failed, Toast.LENGTH_LONG).show();
                     throw new RuntimeException(e);
                 }
             }
@@ -128,6 +149,7 @@ public class MessengerScreen extends Screen implements DefaultLifecycleObserver 
         IconCompat micIcon = IconCompat.createWithResource(
                 getCarContext(), R.mipmap.ic_mic2_foreground);
         CarIcon microphoneCarIcon = new CarIcon.Builder(micIcon).build();
+
         Action mic = new Action.Builder()
                 .setIcon(microphoneCarIcon)
                 .setTitle(getCarContext().getString(R.string.say_something))
@@ -164,20 +186,22 @@ public class MessengerScreen extends Screen implements DefaultLifecycleObserver 
     }
 
     private void onMicClicked(Intent speechRecognizerIntent) {
-        CarToast.makeText(getCarContext(), " Mic clicked", CarToast.LENGTH_LONG)
-            .show();
-        ToneGenerator toneGen1 = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
-        int duration = 500;
-        toneGen1.startTone(ToneGenerator.TONE_PROP_PROMPT, duration);
-        final Handler handler = new Handler(Looper.getMainLooper());
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                speechToTextSession.speechRecognizer.cancel();
-                speechToTextSession.speechRecognizer.startListening(speechRecognizerIntent);
-            }
-        }, duration);
+        if (getCarContext().getSystemService(AudioManager.class).requestAudioFocus(audioFocusRequest)
+                == AudioManager.AUDIOFOCUS_REQUEST_GRANTED &&
+            getCarContext().checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)  {
+            ToneGenerator toneGen1 = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
+            int duration = 500;
+            toneGen1.startTone(ToneGenerator.TONE_PROP_PROMPT, duration);
+         //   final Handler handler = new Handler(Looper.getMainLooper());
+         //   handler.postDelayed(new Runnable() {
+         //       @Override
+         //       public void run() {
+                    speechToTextSession.speechRecognizer.cancel();
+                    speechToTextSession.speechRecognizer.startListening(speechRecognizerIntent);
+         //       }
+         //   }, duration);
 
+        }
     }
     private void onTitleClicked(int index) {
         if (mBound) {

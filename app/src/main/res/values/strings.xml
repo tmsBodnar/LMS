@@ -4,7 +4,7 @@
     <string name="bluetooth_settings_message">Kérem, párosítsa a HC-05 eszközt a megnyíló beállításokban!</string>
     <string name="bluetooth_not_reached">"A HC-05 eszköz nem elérhető"</string>
     <string name="faq">FAQ</string>
-    <string name="sent">Elküldve: </string>
+    <string name="sent">Elküldve </string>
     <string name="speech_button">Inkább szóban mondom el</string>
     <string name="add_new_message">Új üzenet hozzáadása</string>
     <string name="add">Hozzáadás</string>
@@ -18,4 +18,14 @@
     <string name="OK">OK</string>
     <string name="bluetooth_check">Bluetooth beállítások ellenőrzése</string>
     <string name="check">Ellenőrzés…</string>
+    <string name="refresh_messages">Üzenetek Frissítése</string>
+    <string name="say_something">Mondd el</string>
+    <string name="title">LetterConveyor</string>
+    <string name="sending_done">Üzenet elküldve</string>
+    <string name="no_connect">Nincs kapcsolat</string>
+    <string name="not_sent">Küldési hiba</string>
+    <string name="recording_in_progress">Felvétel</string>
+    <string name="recording_complete">Kész</string>
+    <string name="speech_recongition_cancelled">Törölve</string>
+    <string name="voice_command_not_recognized">nincs ilyen parancs</string>
 </resources>

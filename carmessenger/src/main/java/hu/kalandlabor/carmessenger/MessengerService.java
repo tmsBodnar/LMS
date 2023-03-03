@@ -27,6 +27,5 @@ public final class MessengerService extends CarAppService {
     public Session onCreateSession() {
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
         return new SpeechToTextSession(this, speechRecognizer);
-
     }
 }
