@@ -12,4 +12,8 @@
     <string name="voice_command_not_recognized">Nem felismerhető az üzenet</string>
     <string name="setup_permission">Kérem, adjon engedélyt a telefonján a mikrofon használatához.</string>
     <string name="sending_failed">Üzenetküldési hiba!</string>
+    <string name="check_permissions">Jogosultságok ellenőrzése</string>
+    <string name="open_app_error">A megnyitáshoz csatlakozzon le az autóról</string>
+    <string name="audiofocus_denied">Audiofókusz tiltva</string>
+    <string name="permissions_ok">Jogosultságok rendben</string>
 </resources>

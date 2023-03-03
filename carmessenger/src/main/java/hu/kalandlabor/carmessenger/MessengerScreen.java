@@ -60,10 +60,6 @@ public class MessengerScreen extends Screen implements DefaultLifecycleObserver 
         super(carContext);
         this.speechToTextSession = speechToTextSession;
         this.getLifecycle().addObserver(this);
-        if (carContext.checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_DENIED) {
-            Toast.makeText(carContext, R.string.setup_permission, Toast.LENGTH_SHORT).show();
-            //TODO implement long message and button for open permission settings
-        }
         am = (AudioManager) getCarContext().getSystemService(Context.AUDIO_SERVICE);
         AudioAttributes audioAttributes =
                 new AudioAttributes.Builder()
@@ -113,7 +109,6 @@ public class MessengerScreen extends Screen implements DefaultLifecycleObserver 
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "hu-HU");
-        // TODO implement settings page on phone to set extra languages (and maybe permission settings)
         speechToTextSession.speechRecognizer.cancel();
         speechRecognizerIntent = intent;
     }
@@ -186,21 +181,28 @@ public class MessengerScreen extends Screen implements DefaultLifecycleObserver 
     }
 
     private void onMicClicked(Intent speechRecognizerIntent) {
-        if (getCarContext().getSystemService(AudioManager.class).requestAudioFocus(audioFocusRequest)
-                == AudioManager.AUDIOFOCUS_REQUEST_GRANTED &&
-            getCarContext().checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)  {
-            ToneGenerator toneGen1 = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
-            int duration = 500;
-            toneGen1.startTone(ToneGenerator.TONE_PROP_PROMPT, duration);
-         //   final Handler handler = new Handler(Looper.getMainLooper());
-         //   handler.postDelayed(new Runnable() {
-         //       @Override
-         //       public void run() {
-                    speechToTextSession.speechRecognizer.cancel();
-                    speechToTextSession.speechRecognizer.startListening(speechRecognizerIntent);
-         //       }
-         //   }, duration);
+        if (getCarContext().checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            if (getCarContext().getSystemService(AudioManager.class).requestAudioFocus(audioFocusRequest)
+                    == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                ToneGenerator toneGen1 = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
+                int duration = 500;
+                toneGen1.startTone(ToneGenerator.TONE_PROP_PROMPT, duration);
+                //   final Handler handler = new Handler(Looper.getMainLooper());
+                //   handler.postDelayed(new Runnable() {
+                //       @Override
+                //       public void run() {
+                speechToTextSession.speechRecognizer.cancel();
+                speechToTextSession.speechRecognizer.startListening(speechRecognizerIntent);
+                //       }
+                //   }, duration);
 
+            } else {
+                CarToast.makeText(getCarContext(), getCarContext().getString(R.string.audiofocus_denied), CarToast.LENGTH_LONG)
+                        .show();
+            }
+        } else {
+            CarToast.makeText(getCarContext(), getCarContext().getString(R.string.setup_permission), CarToast.LENGTH_LONG)
+                    .show();
         }
     }
     private void onTitleClicked(int index) {
