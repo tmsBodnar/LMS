@@ -1,18 +1,8 @@
-package hu.kalandlabor.carmessenger;
+package hu.kalandlabor.carmessenger.car;
 
-import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
-import android.database.Cursor;
-import android.media.AudioAttributes;
-import android.media.AudioFocusRequest;
-import android.media.AudioManager;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.IBinder;
 import android.os.Message;
-import android.os.Messenger;
 import android.os.RemoteException;
 import android.speech.RecognitionListener;
 import android.speech.SpeechRecognizer;
@@ -21,13 +11,12 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.car.app.CarToast;
 import androidx.car.app.Screen;
-import androidx.car.app.ScreenManager;
 import androidx.car.app.Session;
-import androidx.loader.content.Loader;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+
+import hu.kalandlabor.carmessenger.R;
+import hu.kalandlabor.carmessenger.phone.BluetoothConnectionService;
 
 public class SpeechToTextSession extends Session {
     public static final String TAG = "xxx";
@@ -38,6 +27,13 @@ public class SpeechToTextSession extends Session {
     public SpeechToTextSession(MessengerService context, SpeechRecognizer speechRecognizer) {
         this.context = context;
         this.speechRecognizer = speechRecognizer;
+        BluetoothConnectionService bcs = new BluetoothConnectionService();
+        Intent intent = new Intent();
+        intent.setPackage("hu.kalandlabor.carmessenger");
+        intent.setClassName("hu.kalandlabor.carmessenger",
+                "hu.kalandlabor.carmessenger.phone.BluetoothConnectionService");
+        bcs.onStartCommand(intent,0,1);
+
     }
 
     @Override
@@ -99,8 +95,8 @@ public class SpeechToTextSession extends Session {
                 ArrayList<String> data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 Log.d(TAG, "the string is   " + data);
                 Bundle textToSendBundle = new Bundle();
-                textToSendBundle.putString("text", data.get(0));
-                Message message = Message.obtain(null, 77, textToSendBundle);
+                textToSendBundle.putString("textToSend", data.get(0));
+                Message message = Message.obtain(null, 999, textToSendBundle);
                 try {
                     screen.messenger.send(message);
                 } catch (RemoteException e) {

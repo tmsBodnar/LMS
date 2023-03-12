@@ -1,4 +1,4 @@
-package hu.kalandlabor.carmessenger;
+package hu.kalandlabor.carmessenger.car;
 
 import android.content.pm.ApplicationInfo;
 import android.speech.SpeechRecognizer;

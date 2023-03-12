@@ -1,5 +1,6 @@
 package com.kalandlabor.ledmessengerstrip;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
@@ -8,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -104,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
         gridView = findViewById(R.id.grid_view);
         gridAdapter = new CustomGridAdapter(MainActivity.this, buttonList);
         gridView.setAdapter(gridAdapter);
-        btm = new BluetoothMessenger();
+        btm = new BluetoothMessenger(this);
         btt = new MyBluetoothTask(MainActivity.this);
         btt.execute();
         connection = new RemoteServiceConnection();
@@ -349,13 +351,17 @@ public class MainActivity extends AppCompatActivity {
     // in BluetoothManager class,
     static class MyBluetoothTask extends AsyncTask<Void, Void, String> {
         private final WeakReference<MainActivity> weakActivity;
-        ProgressDialog progressDialog;
+        AlertDialog progressDialog;
         final int ERROR_TYPE = 2;
         final int DEV_ERROR_TYPE = 3;
         MyBluetoothTask myBtt = null;
 
         MyBluetoothTask(MainActivity myActivity) {
             this.weakActivity = new WeakReference<>(myActivity);
+            AlertDialog.Builder builder = new AlertDialog.Builder(myActivity);
+            builder.setCancelable(false);
+            builder.setView(R.layout.alert_dialog);
+            progressDialog = builder.create();
         }
 
         @Override
@@ -385,9 +391,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPreExecute() {
             myBtt = this;
-            progressDialog = ProgressDialog.show(weakActivity.get(),
-                    weakActivity.get().getResources().getString(R.string.bluetooth_check),
-                    "");
+            progressDialog.show();
         }
 
         @Override

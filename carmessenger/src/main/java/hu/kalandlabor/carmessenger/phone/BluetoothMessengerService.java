@@ -1,14 +1,16 @@
-package com.kalandlabor.ledmessengerstrip.managers;
+package hu.kalandlabor.carmessenger.phone;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.util.Log;
 
-import com.kalandlabor.ledmessengerstrip.MainActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -19,21 +21,23 @@ import java.util.Set;
  * initialize the bluetooth connection with HC-05 device
  * and when the socket is OK, sends a message.
  */
-public class BluetoothMessenger {
+public class BluetoothMessengerService {
 
     BluetoothAdapter bluetoothAdapter;
     BluetoothDevice device;
     BluetoothSocket clientSocket;
     OutputStream os;
-    MainActivity activity;
+    BluetoothConnectionService bluetoothConnectionService;
+    SettingsActivity settingsActivity;
 
-    public BluetoothMessenger(MainActivity activity){
-        this.activity = activity;
+    public BluetoothMessengerService(BluetoothConnectionService bluetoothConnectionService, SettingsActivity activity) {
+        this.bluetoothConnectionService = bluetoothConnectionService;
+        this.settingsActivity = activity;
     }
 
     // check the socket, and sends a messege
     public void sendMessage(String textToSend) {
-        if ( clientSocket!= null && os != null) {
+        if (clientSocket != null && os != null) {
             write(textToSend);
         } else {
             initBluetooth();
@@ -49,15 +53,30 @@ public class BluetoothMessenger {
         } else if (!bluetoothAdapter.isEnabled()) {
             return "BLUETOOTH ERROR";
         } else {
-            int btScan = activity.checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN);
-            int btCon = activity.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT);
-            boolean permitted = btScan == PackageManager.PERMISSION_GRANTED && btCon == PackageManager.PERMISSION_GRANTED;
-            if (!permitted) {
-                activity.requestPermissions(new String[] {
-                        Manifest.permission.BLUETOOTH_CONNECT,
-                        Manifest.permission.BLUETOOTH_SCAN}, 1);
-            }
             try {
+                int bt = 0;ContextCompat.checkSelfPermission(this.settingsActivity, Manifest.permission.BLUETOOTH);
+                int btScan = 0;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    btScan = ContextCompat.checkSelfPermission(this.settingsActivity, Manifest.permission.BLUETOOTH_SCAN);
+                } else {
+                    bt = ContextCompat.checkSelfPermission(this.settingsActivity, Manifest.permission.BLUETOOTH);
+                }
+                int btConnect = 0;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    btConnect = ContextCompat.checkSelfPermission(this.settingsActivity, Manifest.permission.BLUETOOTH_CONNECT);
+                }
+                if ( btScan != PackageManager.PERMISSION_GRANTED ||
+                        bt != PackageManager.PERMISSION_GRANTED ||
+                        btConnect != PackageManager.PERMISSION_GRANTED) {
+                    String[] codes = {Manifest.permission.RECORD_AUDIO,
+                            Manifest.permission.INTERNET,
+                            Manifest.permission.BLUETOOTH};
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        codes[3] = Manifest.permission.BLUETOOTH_SCAN;
+                        codes[4] = Manifest.permission.BLUETOOTH_CONNECT;
+                    }
+                    this.settingsActivity.requestPermissions(codes, 1);
+                }
                 Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
                 if (pairedDevices.size() > 0) {
                     String addr = "";
@@ -91,7 +110,7 @@ public class BluetoothMessenger {
     // (some special characters need to set to other),
     // because the device can not showing correctly
     // then creates a byte array and sends it with outputstream
-    public void write(String textToSend) {
+    private void write(String textToSend) {
         byte[] bytes = new byte[textToSend.length()];
         try {
             for ( int i = 0;i < textToSend.length(); i++) {

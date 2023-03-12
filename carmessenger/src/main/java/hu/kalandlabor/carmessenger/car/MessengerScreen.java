@@ -1,4 +1,4 @@
-package hu.kalandlabor.carmessenger;
+package hu.kalandlabor.carmessenger.car;
 
 import android.Manifest;
 import android.content.ComponentName;
@@ -13,7 +13,6 @@ import android.media.ToneGenerator;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
@@ -24,7 +23,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.car.app.CarContext;
 import androidx.car.app.CarToast;
-import androidx.car.app.OnRequestPermissionsListener;
 import androidx.car.app.Screen;
 import androidx.car.app.model.Action;
 import androidx.car.app.model.ActionStrip;
@@ -39,8 +37,9 @@ import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+
+import hu.kalandlabor.carmessenger.R;
 
 public class MessengerScreen extends Screen implements DefaultLifecycleObserver {
 
@@ -85,8 +84,8 @@ public class MessengerScreen extends Screen implements DefaultLifecycleObserver 
         reply = new Messenger(new IncomingHandler());
         serviceIntent = new Intent();
         serviceIntent.setClassName(
-                "com.kalandlabor.ledmessengerstrip",
-                "com.kalandlabor.ledmessengerstrip.services.MessagesDataService");
+                "hu.kalandlabor.carmessenger",
+                "hu.kalandlabor.carmessenger.phone.BluetoothConnectionService");
         if (!mBound) {
             getCarContext().bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE);
         }
@@ -187,15 +186,8 @@ public class MessengerScreen extends Screen implements DefaultLifecycleObserver 
                 ToneGenerator toneGen1 = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
                 int duration = 500;
                 toneGen1.startTone(ToneGenerator.TONE_PROP_PROMPT, duration);
-                //   final Handler handler = new Handler(Looper.getMainLooper());
-                //   handler.postDelayed(new Runnable() {
-                //       @Override
-                //       public void run() {
                 speechToTextSession.speechRecognizer.cancel();
                 speechToTextSession.speechRecognizer.startListening(speechRecognizerIntent);
-                //       }
-                //   }, duration);
-
             } else {
                 CarToast.makeText(getCarContext(), getCarContext().getString(R.string.audiofocus_denied), CarToast.LENGTH_LONG)
                         .show();
