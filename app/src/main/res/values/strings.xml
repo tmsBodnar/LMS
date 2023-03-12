@@ -28,4 +28,8 @@
     <string name="recording_complete">Kész</string>
     <string name="speech_recongition_cancelled">Törölve</string>
     <string name="voice_command_not_recognized">nincs ilyen parancs</string>
+    <string name="open_app_error">Car is connected</string>
+    <string name="sending_failed">Küldés meghiúsult</string>
+    <string name="audiofocus_denied">Audio fókusz nem engedélyezett</string>
+    <string name="setup_permission">Engedélyezze a hangfelvételt</string>
 </resources>

@@ -1,15 +1,12 @@
 package com.kalandlabor.ledmessengerstrip;
 
-import android.Manifest;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -35,6 +32,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.car.app.connection.CarConnection;
 import androidx.preference.PreferenceManager;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -64,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
     String textToSend;
     Messenger messenger = null;
     Messenger reply = null;
+    boolean isBound;
     ServiceConnection connection;
     boolean mBound = false;
     static BluetoothMessenger btm;
@@ -72,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
     final int ADD_TYPE = 1;
     final int ERROR_TYPE = 2;
     final int DEV_ERROR_TYPE = 3;
+    boolean isConnected;
 
     ActivityResultLauncher<Intent> startSpeechActivityIntent = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -97,6 +97,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         context = getApplicationContext();
+        new CarConnection(this).getType().observe(this, this::onConnectionStateUpdated);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -119,6 +120,32 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         sPrefs.registerOnSharedPreferenceChangeListener(listener);
+    }
+
+    private void onConnectionStateUpdated(Integer connectionState) {
+        String message;
+        switch (connectionState) {
+            case CarConnection.CONNECTION_TYPE_NOT_CONNECTED:
+                message = "Not connected to a head unit";
+                isConnected = false;
+                break;
+            case CarConnection.CONNECTION_TYPE_NATIVE:
+                message = "Connected to Android Automotive OS";
+                Toast.makeText(this, R.string.open_app_error, Toast.LENGTH_LONG).show();
+                //   this.finish();
+                isConnected = true;
+                break;
+            case CarConnection.CONNECTION_TYPE_PROJECTION:
+                message = "Connected to Android Auto";
+                Toast.makeText(this, R.string.open_app_error, Toast.LENGTH_LONG).show();
+                //this.finish();
+                break;
+            default:
+                message = "Unknown car connection type";
+                isConnected = false;
+                break;
+        }
+        Log.d("Connection", message);
     }
 
     @Override
